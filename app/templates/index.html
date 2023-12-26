@@ -16,7 +16,8 @@
       <th scope="col">Фамилия</th>
       <th scope="col">Класс</th>
       <th scope="col">Предмет</th>
-      <th scope="col">Оценка</th>
+      <th scope="col">Оценки</th>
+      <th scope="col">Поставить оценку</th>
     </tr>
   </thead>
   <tbody>
@@ -28,6 +29,15 @@
       <td>{{ student.second_name }}</td>
       <td>{{ student.school_class.name }}</td>
       <td>{{ lesson.name }}</td>
+      {% with %}
+      {% set scores_list = [] %}
+      {% for score in lesson.scores %}
+        {% if score.student.id == student.id %}
+          {%-       set scores_list = scores_list.append( score.number ) %}
+        {% endif %}
+      {% endfor %}
+      <td>{{ scores_list|join(', ') }}</td>
+      {% endwith %}
       <td>
         <form action="update_score" method="post" enctype="multipart/form-data">
         <input class="form-control" type="text" name="score" placeholder="Поставить оценку">

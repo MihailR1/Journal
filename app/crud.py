@@ -1,4 +1,5 @@
 import sqlalchemy
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import async_session_factory
 from app.models import Estimation
@@ -6,11 +7,25 @@ from app.models import Estimation
 
 class BasicCRUD:
     @staticmethod
-    async def find_all(model):
+    async def _execute(query, commit: bool = False):
+        async with async_session_factory() as session:
+            try:
+                result = await session.execute(query)
+
+                if commit is True:
+                    await session.commit()
+
+            except SQLAlchemyError:
+                await session.rollback()
+                raise SQLAlchemyError
+
+        return result
+
+    @staticmethod
+    async def get_all(model):
         query = sqlalchemy.select(model)
 
-        async with async_session_factory() as session:
-            result = await session.execute(query)
+        result = await BasicCRUD._execute(query)
 
         return result.unique().scalars().all()
 
@@ -22,8 +37,16 @@ class BasicCRUD:
             .returning(model.__table__.columns)
         )
 
-        async with async_session_factory() as session:
-            result = await session.execute(query)
-            await session.commit()
+        result = await BasicCRUD._execute(query, commit=True)
 
         return result.unique().scalars().all()
+
+    @staticmethod
+    async def add_data_bulk(
+        data_for_insert: list[dict[str, str]] | list[dict[str, object]], model=Estimation
+    ):
+        async with async_session_factory() as session:
+            await session.execute(sqlalchemy.insert(model), data_for_insert)
+            await session.commit()
+
+        return None

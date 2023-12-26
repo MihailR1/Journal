@@ -28,6 +28,6 @@ repos:
     rev: v1.8.0
     hooks:
       - id: mypy
-        args: [--explicit-package-bases]
+        args: [--explicit-package-bases, --ignore-missing-imports]
         name: mypy
         exclude: tests
